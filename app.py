@@ -13,11 +13,13 @@ trading_windows = [3, 5, 15, 30, 60, 90]
 forward_days = [1, 3, 5]
 
 # FEATURE EXTRACTION FUNCTIONS TODO-Move functions to different file
+
+
 def calculate_rsi(data):
     avggain = 0
     avgloss = 0
     for i in range(0, len(data)-1):
-        diff = data[i][3] - data[i+1][3] 
+        diff = data[i][3] - data[i+1][3]
         if diff < 0:
             avgloss += diff*(-1)
         elif diff > 0:
@@ -29,6 +31,7 @@ def calculate_rsi(data):
         rsi = 100 - 100 / (1 + (avggain/avgloss))
     return rsi
 
+
 def calculate_k_r(data, C):
     H_14 = max([row[4] for row in data])
     L_14 = min([row[5] for row in data])
@@ -39,11 +42,13 @@ def calculate_k_r(data, C):
         R = -100*((H_14 - C)/(H_14 - L_14))
     return K, R
 
+
 def calculate_proc(data, period, C):
     proc = 0
-    if data[period-1][3] != 0 :
+    if data[period-1][3] != 0:
         proc = (C - data[period - 1][3]) / data[period-1][3]
     return proc
+
 
 def calculate_obv(features, history, C, volume, trading_window):
     obv = features[trading_window-1][8]
@@ -53,9 +58,10 @@ def calculate_obv(features, history, C, volume, trading_window):
         obv = obv - volume
     return obv
 
+
 def fmacd(features, C):
     ema_12 = ema(12, features[0][10], C)
-    ema_26 = ema(26, features[0][11], C) 
+    ema_26 = ema(26, features[0][11], C)
     return ema_12, ema_26, (ema_12 - ema_26)
 
 
@@ -65,13 +71,17 @@ def ema(n, prev_ema, X):
     return ema
 
 # ROUTE FUNCTIONS
+
+
 @app.route("/")
 def root():
     return "You have hit root route"
 
+
 @app.route("/insertStock", methods=['POST'])
 def insert_history():
-    mydb = mysql.connector.connect(host="localhost", user="root", passwd="root", database="stock")
+    mydb = mysql.connector.connect(
+        host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
     # STOCK QUOTE DB INSERTION
@@ -91,8 +101,8 @@ def insert_history():
 
     required_days = max(trading_windows)
     statement = 'SELECT * FROM stock '
-    statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" ' 
-    statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days) 
+    statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" '
+    statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days)
     mycursor.execute(statement)
     stock_data = mycursor.fetchall()
 
@@ -101,16 +111,17 @@ def insert_history():
     rsi = calculate_rsi(stock_data[:14])
     K, R = calculate_k_r(stock_data[:14], C)
     for trading_window in trading_windows:
-        proc = calculate_proc(stock_data, trading_window, C) 
+        proc = calculate_proc(stock_data, trading_window, C)
         statement = 'SELECT * FROM features '
         statement += 'WHERE Feature_symbol = "'+request.form.get("Symbol")+'" '
         statement += 'AND Trading_window = "'+str(trading_window)+'" '
         statement += 'ORDER BY Feature_date DESC LIMIT '+str(required_days)
         mycursor.execute(statement)
         previous_features = mycursor.fetchall()
-        obv = calculate_obv(previous_features, stock_data, C, int(request.form.get("Volume")), trading_window)
+        obv = calculate_obv(previous_features, stock_data, C, int(
+            request.form.get("Volume")), trading_window)
         ema_12, ema_26, macd = fmacd(previous_features, C)
-        ema_9_macd = ema(9, previous_features[0][12], macd) 
+        ema_9_macd = ema(9, previous_features[0][12], macd)
         if(macd >= ema_9_macd):
             buy_sell = 1
         else:
@@ -119,17 +130,19 @@ def insert_history():
         class_label = 1
         if C < stock_data[trading_window - 1][3]:
             class_label = -1
-        
+
         # PREDICTION INSERTION
         prediction = {}
         accuracy = {}
         for forward_day in forward_days:
-            data_train = pd.DataFrame([[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
+            data_train = pd.DataFrame(
+                [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
             with open("rf_model.dump", "rb") as f:
                 rf = pickle.load(f)
                 prediction[forward_day] = rf.predict(data_train)[0]
-                accuracy[forward_day] = max(list(rf.predict_proba(data_train))[0])
-        
+                accuracy[forward_day] = max(
+                    list(rf.predict_proba(data_train))[0])
+
         prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, "
         prediction_statement += "Prediction_label_3 = %s, Prediction_accuracy_3 = %s, "
         prediction_statement += "Prediction_label_5 = %s, Prediction_accuracy_5 = %s "
@@ -141,25 +154,25 @@ def insert_history():
             str(accuracy[3]),
             str(prediction[5]),
             str(accuracy[5]),
-            request.form.get("Symbol"), 
+            request.form.get("Symbol"),
             str(trading_window)
         )
         mycursor.execute(prediction_statement, prediction_data)
         mydb.commit()
-        # PREDICTION INSERTION 
+        # PREDICTION INSERTION
 
         # FEATURE DB INSERTION
         feature_statement = "INSERT INTO features VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         feature_data = (
-            request.form.get("Symbol"), 
+            request.form.get("Symbol"),
             request.form.get("Date"),
             str(trading_window),
             str(rsi),
             str(K),
             str(R),
-            str(buy_sell), 
+            str(buy_sell),
             str(proc),
-            str(obv), 
+            str(obv),
             str(class_label),
             str(ema_12),
             str(ema_26),
@@ -182,20 +195,23 @@ def insert_history():
     mydb.close()
     return "Inserted stock and feature data into DB"
 
+
 @app.route("/updateLive", methods=['POST'])
 def update_live():
-    mydb = mysql.connector.connect(host="localhost", user="root", passwd="root", database="stock")
+    mydb = mysql.connector.connect(
+        host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
     required_days = max(trading_windows)
     statement = 'SELECT * FROM stock '
-    statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" ' 
-    statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days) 
+    statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" '
+    statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days)
     mycursor.execute(statement)
     history_data = mycursor.fetchall()
 
     # update live data
-    drop_statement = 'DELETE FROM prediction WHERE Prediction_symbol = "'+request.form.get("Symbol")+'"'
+    drop_statement = 'DELETE FROM prediction WHERE Prediction_symbol = "' + \
+        request.form.get("Symbol")+'"'
     mycursor.execute(drop_statement)
     mydb.commit()
     live_statement = "UPDATE stock"
@@ -203,7 +219,7 @@ def update_live():
     live_statement += " WHERE Stock_symbol = %s"
     live_statement += " AND Stock_date = %s"
     live_data = (
-        request.form.get("Current"), 
+        request.form.get("Current"),
         request.form.get("High"),
         request.form.get("Low"),
         request.form.get("Volume"),
@@ -218,69 +234,92 @@ def update_live():
     mydb.close()
     return "Inserted live data into DB"
 
+
+@app.route("/companies")
+def get_companies():
+    mydb = mysql.connector.connect(
+        host="localhost", user="root", passwd="root", database="stock")
+    mycursor = mydb.cursor()
+
+    statement = "SELECT * FROM company"
+    mycursor.execute(statement)
+    data = mycursor.fetchall()
+    companies = []
+    for row in data:
+        companies.append({"companySymbol": row[0], "companyName": row[1]})
+
+    mycursor.close()
+    mydb.close()
+    return jsonify(companies)
+
+
 @app.route("/stocks/<stock_symbol>")
 def get_stock(stock_symbol):
-    mydb = mysql.connector.connect( host="localhost", user="root", passwd="root", database="stock" )
+    mydb = mysql.connector.connect(
+        host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
     statement = "SELECT * FROM stock "
-    statement += 'WHERE Stock_symbol = "'+ stock_symbol +'" '
-    statement += "ORDER BY Stock_date DESC LIMIT "+request.args['limit']+" OFFSET "+ request.args['offset']
+    statement += 'WHERE Stock_symbol = "' + stock_symbol + '" '
+    statement += "ORDER BY Stock_date DESC LIMIT " + \
+        request.args['limit']+" OFFSET " + request.args['offset']
 
     mycursor.execute(statement)
     data = mycursor.fetchall()
-    
+
     stocks = []
     for row in data:
         stocks.append({
             "companySymbol": row[0],
-            "stockDate":row[1],
-            "stockOpen":row[2],
-            "stockClose":row[3],
-            "stockHigh":row[4],
-            "stockLow":row[5],
-            "stockVolume":row[6],
+            "stockDate": row[1],
+            "stockOpen": row[2],
+            "stockClose": row[3],
+            "stockHigh": row[4],
+            "stockLow": row[5],
+            "stockVolume": row[6],
         })
 
     mycursor.close()
     mydb.close()
     return jsonify(stocks)
 
-@app.route("/getPrediction/<prediction_symbol>")
+
+@app.route("/predictions/<prediction_symbol>")
 def get_live(prediction_symbol):
-    mydb = mysql.connector.connect( host="localhost", user="root", passwd="root", database="stock" )
+    mydb = mysql.connector.connect(
+        host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
-    statement = 'SELECT Trading_window, Prediction_label_1, Prediction_accuracy_1, Prediction_label_3, Prediction_accuracy_3, Prediction_label_5, Prediction_accuracy_5 FROM prediction'
+    statement = 'SELECT * FROM prediction'
     statement += ' WHERE Prediction_symbol = "' + prediction_symbol + '"'
     mycursor.execute(statement)
     data = mycursor.fetchall()
-    
-    mycursor.close()
-    mydb.close()
-    return jsonify(data)
 
-@app.route("/companies")
-def get_companies():
-    mydb = mysql.connector.connect( host="localhost", user="root", passwd="root", database="stock" )
-    mycursor = mydb.cursor()
-
-    statement = "SELECT * FROM company" 
-    mycursor.execute(statement)
-    data = mycursor.fetchall()
-    companies = []
+    predictions = []
     for row in data:
-        companies.append({"companySymbol": row[0],"companyName": row[1]})
+        predictions.append({
+            "companySymbol": row[0],
+            "TradingWindow": row[1],
+            "predictionLabel1": row[2],
+            "predictionAccuracy1": row[3],
+            "predictionLabel3": row[4],
+            "predictionAccuracy3": row[5],
+            "predictionLabel5": row[6],
+            "predictionAccuracy5": row[7],
+        })
 
     mycursor.close()
     mydb.close()
-    return jsonify(companies)
+    return jsonify(predictions)
+
 
 @app.route("/train")
-def train(error_day = -1):
+def train(error_day=-1):
 
-    columns = ["Feature_symbol", "Feature_date", "Trading_window", "Feature_RSI", "Feature_K", "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV", "Feature_label", "x", "y", "z"]
-    mydb = mysql.connector.connect( host="localhost", user="root", passwd="root", database="stock" )
+    columns = ["Feature_symbol", "Feature_date", "Trading_window", "Feature_RSI", "Feature_K",
+               "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV", "Feature_label", "x", "y", "z"]
+    mydb = mysql.connector.connect(
+        host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
     training_data = pd.DataFrame(columns=columns)
@@ -290,22 +329,27 @@ def train(error_day = -1):
     for company in companies:
         for trading_window in trading_windows:
             statement = "SELECT * FROM features "
-            statement += "WHERE Trading_window = "+str(trading_window)+" AND Feature_symbol = '"+company[0]+"' "
+            statement += "WHERE Trading_window = " + \
+                str(trading_window)+" AND Feature_symbol = '"+company[0]+"' "
             statement += "ORDER BY Feature_date"
             mycursor.execute(statement)
             data = mycursor.fetchall()
-            data = pd.DataFrame(data, columns = columns)
+            data = pd.DataFrame(data, columns=columns)
             for forward_day in forward_days:
                 forward_day_data = data.copy()
-                forward_day_data.Feature_label = forward_day_data.Feature_label.shift(-1*forward_day)
+                forward_day_data.Feature_label = forward_day_data.Feature_label.shift(
+                    -1*forward_day)
                 forward_day_data = forward_day_data[:-1*forward_day]
                 forward_day_data.insert(3, 'Forward_day', forward_day)
-                training_data = training_data.append(forward_day_data, ignore_index=True, sort=True)
-    
-    x_train = training_data[["Trading_window", "Forward_day", "Feature_RSI", "Feature_K", "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV"]]
+                training_data = training_data.append(
+                    forward_day_data, ignore_index=True, sort=True)
+
+    x_train = training_data[["Trading_window", "Forward_day", "Feature_RSI",
+                             "Feature_K", "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV"]]
     y_train = training_data[["Feature_label"]]
     rf = RandomForestClassifier(n_estimators=100, max_depth=10)
-    gbdt = GradientBoostingClassifier(n_estimators=100, max_depth=10, loss="exponential")
+    gbdt = GradientBoostingClassifier(
+        n_estimators=100, max_depth=10, loss="exponential")
     rf.fit(x_train, y_train.values.ravel())
     gbdt.fit(x_train, y_train)
 
@@ -320,6 +364,6 @@ def train(error_day = -1):
     mydb.close()
     return "Trained Model"
 
-if __name__ == "__main__":
-    app.run(host = "192.168.2.8")
 
+if __name__ == "__main__":
+    app.run(host="192.168.2.8")
