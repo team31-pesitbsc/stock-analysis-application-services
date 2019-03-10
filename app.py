@@ -218,22 +218,33 @@ def update_live():
     mydb.close()
     return "Inserted live data into DB"
 
-@app.route("/getStock/<stock_symbol>/<stock_date>/<day_lag>/<number_of_days>/")
-def get_stock(stock_symbol, stock_date, day_lag, number_of_days):
+@app.route("/stocks/<stock_symbol>")
+def get_stock(stock_symbol):
     mydb = mysql.connector.connect( host="localhost", user="root", passwd="root", database="stock" )
     mycursor = mydb.cursor()
 
-    statement = "SELECT Stock_date, Stock_open, Stock_close, Stock_high, Stock_low, Stock_volume, Trading_window, Feature_label "
-    statement += 'FROM (stock JOIN features ON Stock_symbol = feature_symbol AND Stock_date = feature_date) '
-    statement += 'WHERE Stock_symbol = "'+ stock_symbol +'" AND Stock_date <= "'+ stock_date +'" '
-    statement += "ORDER BY Stock_date DESC LIMIT "+str(int(day_lag)*len(trading_windows))+", "+ str(int(number_of_days)*len(trading_windows))
-    print(statement)
+    statement = "SELECT * FROM stock "
+    statement += 'WHERE Stock_symbol = "'+ stock_symbol +'" '
+    statement += "ORDER BY Stock_date DESC LIMIT "+request.args['limit']+" OFFSET "+ request.args['offset']
+
     mycursor.execute(statement)
     data = mycursor.fetchall()
     
+    stocks = []
+    for row in data:
+        stocks.append({
+            "companySymbol": row[0],
+            "stockDate":row[1],
+            "stockOpen":row[2],
+            "stockClose":row[3],
+            "stockHigh":row[4],
+            "stockLow":row[5],
+            "stockVolume":row[6],
+        })
+
     mycursor.close()
     mydb.close()
-    return jsonify(data)
+    return jsonify(stocks)
 
 @app.route("/getPrediction/<prediction_symbol>")
 def get_live(prediction_symbol):
@@ -249,7 +260,7 @@ def get_live(prediction_symbol):
     mydb.close()
     return jsonify(data)
 
-@app.route("/getCompanies")
+@app.route("/companies")
 def get_companies():
     mydb = mysql.connector.connect( host="localhost", user="root", passwd="root", database="stock" )
     mycursor = mydb.cursor()
