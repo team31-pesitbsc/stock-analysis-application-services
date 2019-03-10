@@ -257,10 +257,13 @@ def get_companies():
     statement = "SELECT * FROM company" 
     mycursor.execute(statement)
     data = mycursor.fetchall()
-    
+    companies = []
+    for row in data:
+        companies.append({"companySymbol": row[0],"companyName": row[1]})
+
     mycursor.close()
     mydb.close()
-    return jsonify(data)
+    return jsonify(companies)
 
 @app.route("/train")
 def train(error_day = -1):
