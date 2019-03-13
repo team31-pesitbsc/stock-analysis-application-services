@@ -78,6 +78,7 @@ def root():
     return "You have hit root route"
 
 
+# FIXME - need to switch DB design for work
 @app.route("/insertStock", methods=['POST'])
 def insert_history():
     mydb = mysql.connector.connect(
@@ -131,35 +132,65 @@ def insert_history():
         if C < stock_data[trading_window - 1][3]:
             class_label = -1
 
-        # PREDICTION INSERTION
-        prediction = {}
-        accuracy = {}
+        # RF PREDICTION UPDATION
+        rf_prediction = {}
+        rf_accuracy = {}
         for forward_day in forward_days:
             data_train = pd.DataFrame(
                 [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
             with open("rf_model.dump", "rb") as f:
                 rf = pickle.load(f)
-                prediction[forward_day] = rf.predict(data_train)[0]
-                accuracy[forward_day] = max(
+                rf_prediction[forward_day] = rf.predict(data_train)[0]
+                rf_accuracy[forward_day] = max(
                     list(rf.predict_proba(data_train))[0])
 
         prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, "
         prediction_statement += "Prediction_label_3 = %s, Prediction_accuracy_3 = %s, "
         prediction_statement += "Prediction_label_5 = %s, Prediction_accuracy_5 = %s "
-        prediction_statement += "WHERE Prediction_symbol = %s AND Trading_window = %s"
+        prediction_statement += "WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = 'RF'"
         prediction_data = (
-            str(prediction[1]),
-            str(accuracy[1]),
-            str(prediction[3]),
-            str(accuracy[3]),
-            str(prediction[5]),
-            str(accuracy[5]),
+            str(rf_prediction[1]),
+            str(rf_accuracy[1]),
+            str(rf_prediction[3]),
+            str(rf_accuracy[3]),
+            str(rf_prediction[5]),
+            str(rf_accuracy[5]),
             request.form.get("Symbol"),
             str(trading_window)
         )
         mycursor.execute(prediction_statement, prediction_data)
         mydb.commit()
-        # PREDICTION INSERTION
+        # RF PREDICTION UPDATION
+
+        # GBDT PREDICTION UPDATION
+        gbdt_prediction = {}
+        gbdt_accuracy = {}
+        for forward_day in forward_days:
+            data_train = pd.DataFrame(
+                [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
+            with open("gbdt_model.dump", "rb") as f:
+                gbdt = pickle.load(f)
+                gbdt_prediction[forward_day] = gbdt.predict(data_train)[0]
+                gbdt_accuracy[forward_day] = max(
+                    list(gbdt.predict_proba(data_train))[0])
+
+        prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, "
+        prediction_statement += "Prediction_label_3 = %s, Prediction_accuracy_3 = %s, "
+        prediction_statement += "Prediction_label_5 = %s, Prediction_accuracy_5 = %s "
+        prediction_statement += "WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = 'GBDT'"
+        prediction_data = (
+            str(gbdt_prediction[1]),
+            str(gbdt_accuracy[1]),
+            str(gbdt_prediction[3]),
+            str(gbdt_accuracy[3]),
+            str(gbdt_prediction[5]),
+            str(gbdt_accuracy[5]),
+            request.form.get("Symbol"),
+            str(trading_window)
+        )
+        mycursor.execute(prediction_statement, prediction_data)
+        mydb.commit()
+        # GBDT PREDICTION UPDATION
 
         # FEATURE DB INSERTION
         feature_statement = "INSERT INTO features VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -182,15 +213,6 @@ def insert_history():
         mydb.commit()
         # FEATURE DB INSERTION
 
-    # fp =  open("error_day", "r")
-    # error_day = int(fp.read())
-    # if(error_day % 30*len(trading_windows)*len(forward_days) == 0):
-    #     train(error_day / 7)
-    # fp.close()
-    # fp =  open("error_day", "w")
-    # fp.write(str(error_day+1))
-    # fp.close()
-
     mycursor.close()
     mydb.close()
     return "Inserted stock and feature data into DB"
@@ -207,12 +229,7 @@ def update_live():
     statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" '
     statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days)
     mycursor.execute(statement)
-    history_data = mycursor.fetchall()
 
-    # update live data
-    drop_statement = 'DELETE FROM prediction WHERE Prediction_symbol = "' + \
-        request.form.get("Symbol")+'"'
-    mycursor.execute(drop_statement)
     mydb.commit()
     live_statement = "UPDATE stock"
     live_statement += " SET Stock_close = %s, Stock_high = %s, Stock_low = %s, Stock_volume = %s"
@@ -357,8 +374,8 @@ def train(error_day=-1):
     print(gbdt.score(x_train, y_train))
     with open("rf_model.dump", "wb") as f:
         pickle.dump(rf, f)
-    # with open("gbdt_model.dump", "wb") as f:
-    #     pickle.dump(gbdt, f)
+    with open("gbdt_model.dump", "wb") as f:
+        pickle.dump(gbdt, f)
 
     mycursor.close()
     mydb.close()
@@ -366,4 +383,4 @@ def train(error_day=-1):
 
 
 if __name__ == "__main__":
-    app.run(host="192.168.2.8")
+    app.run(host="192.168.2.5")

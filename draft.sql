@@ -22,6 +22,7 @@ CREATE TABLE stock (
 
 CREATE TABLE prediction (
 	Prediction_symbol VARCHAR(10) NOT NULL,
+	Classifier VARCHAR(10) NOT NULL,
 	Trading_window INT NOT NULL,
 	Prediction_label_1 INT NOT NULL,
 	Prediction_accuracy_1 DOUBLE NOT NULL,
@@ -74,12 +75,19 @@ BEGIN
 		INSERT INTO features VALUES (symbol, DATE_ADD("1900-01-01", INTERVAL y DAY), 90, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0);
 		SET y = y + 1;
 	END WHILE;
-	INSERT INTO prediction VALUES (symbol, 3, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, 5, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, 15, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, 30, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, 60, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, 90, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "RF", 3, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "GBDT", 3, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "RF", 5, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "GBDT", 5, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "RF", 15, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "GBDT", 15, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "RF", 30, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "GBDT", 30, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "RF", 60, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "GBDT", 60, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "RF", 90, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "GBDT", 90, 0, 0, 0, 0, 0, 0);
+
 END//
 
 DROP trigger IF EXISTS onNewCompanyTrigger//
