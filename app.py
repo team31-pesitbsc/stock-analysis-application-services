@@ -1,4 +1,3 @@
-from pprint import pprint
 import mysql.connector
 import pandas as pd
 import numpy as np
@@ -67,7 +66,7 @@ def fmacd(features, c):
 
 def ema(n, prev_ema, x):
     weight = 2.0/(n + 1.0)
-    ema = (x - prev_ema)*weight + prev_ema
+    ema = (x - prev_ema) * weight + prev_ema
     return ema
 
 # ROUTE FUNCTIONS
@@ -75,7 +74,7 @@ def ema(n, prev_ema, x):
 
 @app.route("/")
 def root():
-    return "Welcom to stock analysis application"
+    return "Welcome to stock analysis application"
 
 
 @app.route("/insertStock", methods=['POST'])
@@ -132,13 +131,14 @@ def insert_history():
         if C < stock_data[trading_window - 1][3]:
             class_label = -1
 
-        for classifier in CLASSIFIERS:
+        # PREDICTION
+        for classifier_name in CLASSIFIERS:
             prediction = {}
             accuracy = {}
             for forward_day in FORWARD_DAYS:
                 data_train = pd.DataFrame(
                     [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
-                with open("trained-models/%(classifier)s_model.dump" % {'classifier': classifier}, "rb") as f:
+                with open("trained-models/%(classifier_name)s_model.dump" % {'classifier_name': classifier_name}, "rb") as f:
                     model = pickle.load(f)
                     prediction[forward_day] = model.predict(data_train)[0]
                     accuracy[forward_day] = max(
@@ -157,7 +157,7 @@ def insert_history():
                 str(accuracy[5]),
                 request.form.get("Symbol"),
                 str(trading_window),
-                classifier
+                classifier_name
             )
             mycursor.execute(prediction_statement, prediction_data)
             mydb.commit()
@@ -335,18 +335,11 @@ def train(error_day=-1):
                              "Feature_K", "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV"]]
     y_train = training_data[["Feature_label"]]
 
-    rf = RandomForestClassifier(n_estimators=100, max_depth=10)
-    gbdt = GradientBoostingClassifier(
-        n_estimators=100, max_depth=10, loss="exponential")
-    rf.fit(x_train, y_train.values.ravel())
-    gbdt.fit(x_train, y_train)
-
-    print(rf.score(x_train, y_train))
-    print(gbdt.score(x_train, y_train))
-    with open("trained-models/RF_model.dump", "wb") as f:
-        pickle.dump(rf, f)
-    with open("trained-models/GBDT_model.dump", "wb") as f:
-        pickle.dump(gbdt, f)
+    for classifier_name, classifier in CLASSIFIERS.items():
+        model = classifier.fit(x_train, y_train.values.ravel())
+        print(model.score(x_train, y_train.values.ravel()))
+        with open("trained-models/%(classifier_name)s_model.dump" % {"classifier_name": classifier_name}, "wb") as f:
+            pickle.dump(model, f)
 
     mycursor.close()
     mydb.close()
