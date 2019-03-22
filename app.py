@@ -344,7 +344,3 @@ def train(error_day=-1):
     mycursor.close()
     mydb.close()
     return "Trained Model"
-
-
-if __name__ == "__main__":
-    app.run()
