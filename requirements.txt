@@ -5,3 +5,4 @@ requests
 mysql_connector_repackaged
 scikit_learn
 gunicorn
+gevent
