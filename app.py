@@ -78,13 +78,13 @@ def root():
     return "You have hit root route"
 
 
-# FIXME - need to switch DB design for work
 @app.route("/insertStock", methods=['POST'])
 def insert_history():
     mydb = mysql.connector.connect(
         host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
+    print(request.form.get("Date"))
     # STOCK QUOTE DB INSERTION
     stock_statement = "INSERT INTO stock VALUES (%s, %s, %s, %s, %s, %s, %s)"
     stock_data = (
@@ -316,13 +316,14 @@ def get_live(prediction_symbol):
     for row in data:
         predictions.append({
             "companySymbol": row[0],
-            "TradingWindow": row[1],
-            "predictionLabel1": row[2],
-            "predictionAccuracy1": row[3],
-            "predictionLabel3": row[4],
-            "predictionAccuracy3": row[5],
-            "predictionLabel5": row[6],
-            "predictionAccuracy5": row[7],
+            "Classifier":row[1],
+            "TradingWindow": row[2],
+            "predictionLabel1": row[3],
+            "predictionAccuracy1": row[4],
+            "predictionLabel3": row[5],
+            "predictionAccuracy3": row[6],
+            "predictionLabel5": row[7],
+            "predictionAccuracy5": row[8],
         })
 
     mycursor.close()
@@ -383,4 +384,4 @@ def train(error_day=-1):
 
 
 if __name__ == "__main__":
-    app.run(host="192.168.2.5")
+    app.run(host="127.0.0.1", debug=True)
