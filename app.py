@@ -7,12 +7,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score, f1_score
 import pickle
 from flask import Flask, request, jsonify
-
+from constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
 app = Flask(__name__)
-trading_windows = [3, 5, 15, 30, 60, 90]
-forward_days = [1, 3, 5]
 
-# FEATURE EXTRACTION FUNCTIONS TODO-Move functions to different file
+
+# FEATURE EXTRACTION FUNCTIONS
+# TODO - Move functions to different file
 
 
 def calculate_rsi(data):
@@ -32,42 +32,42 @@ def calculate_rsi(data):
     return rsi
 
 
-def calculate_k_r(data, C):
+def calculate_k_r(data, c):
     H_14 = max([row[4] for row in data])
     L_14 = min([row[5] for row in data])
     K = 0
     R = 0
     if (H_14 - L_14) != 0:
-        K = 100*((C - L_14)/(H_14 - L_14))
-        R = -100*((H_14 - C)/(H_14 - L_14))
+        K = 100*((c - L_14)/(H_14 - L_14))
+        R = -100*((H_14 - c)/(H_14 - L_14))
     return K, R
 
 
-def calculate_proc(data, period, C):
+def calculate_proc(data, period, c):
     proc = 0
     if data[period-1][3] != 0:
-        proc = (C - data[period - 1][3]) / data[period-1][3]
+        proc = (c - data[period - 1][3]) / data[period-1][3]
     return proc
 
 
-def calculate_obv(features, history, C, volume, trading_window):
+def calculate_obv(features, history, c, volume, trading_window):
     obv = features[trading_window-1][8]
-    if C > history[trading_window-1][3]:
+    if c > history[trading_window-1][3]:
         obv = obv + volume
-    elif C < history[trading_window-1][3]:
+    elif c < history[trading_window-1][3]:
         obv = obv - volume
     return obv
 
 
-def fmacd(features, C):
-    ema_12 = ema(12, features[0][10], C)
-    ema_26 = ema(26, features[0][11], C)
+def fmacd(features, c):
+    ema_12 = ema(12, features[0][10], c)
+    ema_26 = ema(26, features[0][11], c)
     return ema_12, ema_26, (ema_12 - ema_26)
 
 
-def ema(n, prev_ema, X):
+def ema(n, prev_ema, x):
     weight = 2.0/(n + 1.0)
-    ema = (X - prev_ema)*weight + prev_ema
+    ema = (x - prev_ema)*weight + prev_ema
     return ema
 
 # ROUTE FUNCTIONS
@@ -75,7 +75,7 @@ def ema(n, prev_ema, X):
 
 @app.route("/")
 def root():
-    return "You have hit root route"
+    return "Welcom to stock analysis application"
 
 
 @app.route("/insertStock", methods=['POST'])
@@ -100,7 +100,7 @@ def insert_history():
     mydb.commit()
     # STOCK QUOTE DB INSERTION
 
-    required_days = max(trading_windows)
+    required_days = max(TRADING_WINDOWS)
     statement = 'SELECT * FROM stock '
     statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" '
     statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days)
@@ -111,7 +111,7 @@ def insert_history():
     C = float(request.form.get("Close"))
     rsi = calculate_rsi(stock_data[:14])
     K, R = calculate_k_r(stock_data[:14], C)
-    for trading_window in trading_windows:
+    for trading_window in TRADING_WINDOWS:
         proc = calculate_proc(stock_data, trading_window, C)
         statement = 'SELECT * FROM features '
         statement += 'WHERE Feature_symbol = "'+request.form.get("Symbol")+'" '
@@ -132,65 +132,35 @@ def insert_history():
         if C < stock_data[trading_window - 1][3]:
             class_label = -1
 
-        # RF PREDICTION UPDATION
-        rf_prediction = {}
-        rf_accuracy = {}
-        for forward_day in forward_days:
-            data_train = pd.DataFrame(
-                [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
-            with open("rf_model.dump", "rb") as f:
-                rf = pickle.load(f)
-                rf_prediction[forward_day] = rf.predict(data_train)[0]
-                rf_accuracy[forward_day] = max(
-                    list(rf.predict_proba(data_train))[0])
+        for classifier in CLASSIFIERS:
+            prediction = {}
+            accuracy = {}
+            for forward_day in FORWARD_DAYS:
+                data_train = pd.DataFrame(
+                    [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
+                with open("trained-models/%(classifier)s_model.dump" % {'classifier': classifier}, "rb") as f:
+                    model = pickle.load(f)
+                    prediction[forward_day] = model.predict(data_train)[0]
+                    accuracy[forward_day] = max(
+                        list(model.predict_proba(data_train))[0])
 
-        prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, "
-        prediction_statement += "Prediction_label_3 = %s, Prediction_accuracy_3 = %s, "
-        prediction_statement += "Prediction_label_5 = %s, Prediction_accuracy_5 = %s "
-        prediction_statement += "WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = 'RF'"
-        prediction_data = (
-            str(rf_prediction[1]),
-            str(rf_accuracy[1]),
-            str(rf_prediction[3]),
-            str(rf_accuracy[3]),
-            str(rf_prediction[5]),
-            str(rf_accuracy[5]),
-            request.form.get("Symbol"),
-            str(trading_window)
-        )
-        mycursor.execute(prediction_statement, prediction_data)
-        mydb.commit()
-        # RF PREDICTION UPDATION
-
-        # GBDT PREDICTION UPDATION
-        gbdt_prediction = {}
-        gbdt_accuracy = {}
-        for forward_day in forward_days:
-            data_train = pd.DataFrame(
-                [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
-            with open("gbdt_model.dump", "rb") as f:
-                gbdt = pickle.load(f)
-                gbdt_prediction[forward_day] = gbdt.predict(data_train)[0]
-                gbdt_accuracy[forward_day] = max(
-                    list(gbdt.predict_proba(data_train))[0])
-
-        prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, "
-        prediction_statement += "Prediction_label_3 = %s, Prediction_accuracy_3 = %s, "
-        prediction_statement += "Prediction_label_5 = %s, Prediction_accuracy_5 = %s "
-        prediction_statement += "WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = 'GBDT'"
-        prediction_data = (
-            str(gbdt_prediction[1]),
-            str(gbdt_accuracy[1]),
-            str(gbdt_prediction[3]),
-            str(gbdt_accuracy[3]),
-            str(gbdt_prediction[5]),
-            str(gbdt_accuracy[5]),
-            request.form.get("Symbol"),
-            str(trading_window)
-        )
-        mycursor.execute(prediction_statement, prediction_data)
-        mydb.commit()
-        # GBDT PREDICTION UPDATION
+            prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, "
+            prediction_statement += "Prediction_label_3 = %s, Prediction_accuracy_3 = %s, "
+            prediction_statement += "Prediction_label_5 = %s, Prediction_accuracy_5 = %s "
+            prediction_statement += "WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = %s"
+            prediction_data = (
+                str(prediction[1]),
+                str(accuracy[1]),
+                str(prediction[3]),
+                str(accuracy[3]),
+                str(prediction[5]),
+                str(accuracy[5]),
+                request.form.get("Symbol"),
+                str(trading_window),
+                classifier
+            )
+            mycursor.execute(prediction_statement, prediction_data)
+            mydb.commit()
 
         # FEATURE DB INSERTION
         feature_statement = "INSERT INTO features VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -224,7 +194,7 @@ def update_live():
         host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
-    required_days = max(trading_windows)
+    required_days = max(TRADING_WINDOWS)
     statement = 'SELECT * FROM stock '
     statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" '
     statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days)
@@ -243,7 +213,6 @@ def update_live():
         request.form.get("Symbol"),
         request.form.get("Date")
     )
-    # update live data
     mycursor.execute(live_statement, live_data)
     mydb.commit()
 
@@ -316,7 +285,7 @@ def get_live(prediction_symbol):
     for row in data:
         predictions.append({
             "companySymbol": row[0],
-            "Classifier":row[1],
+            "Classifier": row[1],
             "TradingWindow": row[2],
             "predictionLabel1": row[3],
             "predictionAccuracy1": row[4],
@@ -345,7 +314,7 @@ def train(error_day=-1):
     mycursor.execute(statement)
     companies = mycursor.fetchall()
     for company in companies:
-        for trading_window in trading_windows:
+        for trading_window in TRADING_WINDOWS:
             statement = "SELECT * FROM features "
             statement += "WHERE Trading_window = " + \
                 str(trading_window)+" AND Feature_symbol = '"+company[0]+"' "
@@ -353,7 +322,7 @@ def train(error_day=-1):
             mycursor.execute(statement)
             data = mycursor.fetchall()
             data = pd.DataFrame(data, columns=columns)
-            for forward_day in forward_days:
+            for forward_day in FORWARD_DAYS:
                 forward_day_data = data.copy()
                 forward_day_data.Feature_label = forward_day_data.Feature_label.shift(
                     -1*forward_day)
@@ -365,6 +334,7 @@ def train(error_day=-1):
     x_train = training_data[["Trading_window", "Forward_day", "Feature_RSI",
                              "Feature_K", "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV"]]
     y_train = training_data[["Feature_label"]]
+
     rf = RandomForestClassifier(n_estimators=100, max_depth=10)
     gbdt = GradientBoostingClassifier(
         n_estimators=100, max_depth=10, loss="exponential")
@@ -373,9 +343,9 @@ def train(error_day=-1):
 
     print(rf.score(x_train, y_train))
     print(gbdt.score(x_train, y_train))
-    with open("rf_model.dump", "wb") as f:
+    with open("trained-models/RF_model.dump", "wb") as f:
         pickle.dump(rf, f)
-    with open("gbdt_model.dump", "wb") as f:
+    with open("trained-models/GBDT_model.dump", "wb") as f:
         pickle.dump(gbdt, f)
 
     mycursor.close()
