@@ -1,12 +1,11 @@
 import mysql.connector
 import pandas as pd
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score, f1_score
 import pickle
 from flask import Flask, request, jsonify
 from constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
+
 app = Flask(__name__)
 
 
@@ -346,5 +345,5 @@ def train(error_day=-1):
     return "Trained Model"
 
 
-if __name__ == "__main__":
-    app.run(host="127.0.0.1", debug=True)
+if __name__ == '__main__':
+    app.run()
