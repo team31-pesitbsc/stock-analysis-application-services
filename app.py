@@ -17,9 +17,17 @@ app = Flask(__name__)
 def root():
     return "Welcome to the stock analysis application"
 
+# STOCK ROUTES
 
-@app.route("/insertStock", methods=['POST'])
-def insert_history():
+
+@app.route("/stocks")
+def get_stocks():
+    response = stock_repository.get_stocks(request)
+    return jsonify(response)
+
+
+@app.route("/stocks", methods=['POST'])
+def insert_stock():
     mydb = mysql.connector.connect(
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
@@ -128,31 +136,13 @@ def insert_history():
     return "Inserted stock and feature data into DB"
 
 
-@app.route("/updateLive", methods=['POST'])
-def update_live():
-    mydb = mysql.connector.connect(
-        host="localhost", user="root", passwd="root", database="stock")
-    mycursor = mydb.cursor()
+@app.route("/stocks", methods=['PUT'])
+def update_stock():
+    # TODO - update stock only if it is live or throw error
+    stock_repository.update_stock(request)
+    return "Updated Live data"
 
-    mydb.commit()
-    live_statement = "UPDATE stock"
-    live_statement += " SET Stock_close = %s, Stock_high = %s, Stock_low = %s, Stock_volume = %s"
-    live_statement += " WHERE Stock_symbol = %s"
-    live_statement += " AND Stock_date = %s"
-    live_data = (
-        request.form.get("Current"),
-        request.form.get("High"),
-        request.form.get("Low"),
-        request.form.get("Volume"),
-        request.form.get("Symbol"),
-        request.form.get("Date")
-    )
-    mycursor.execute(live_statement, live_data)
-    mydb.commit()
-
-    mycursor.close()
-    mydb.close()
-    return "Inserted live data into DB"
+# COMPANY ROUTES
 
 
 @app.route("/companies")
@@ -160,11 +150,7 @@ def get_companies():
     companies = company_repository.get_companies()
     return jsonify(companies)
 
-
-@app.route("/stocks")
-def get_stocks():
-    response = stock_repository.get_stocks(request)
-    return jsonify(response)
+# PREDICTION ROUTES
 
 
 @app.route("/predictions")
@@ -174,7 +160,7 @@ def get_predictions():
 
 
 @app.route("/train")
-def train(error_day=-1):
+def train():
 
     columns = ["Feature_symbol", "Feature_date", "Trading_window", "Feature_RSI", "Feature_K",
                "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV", "Feature_label", "x", "y", "z"]
