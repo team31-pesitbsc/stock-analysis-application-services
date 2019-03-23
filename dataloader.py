@@ -2,9 +2,9 @@ import csv
 import requests
 import sys
 
-URL = "http://127.0.0.1:5000/insertStock"
+URL = "http://192.168.2.6:5000/insertStock"
 
-symbols = ["RCOM"]
+symbols = ["WIPRO"]
 for symbol in symbols:
     with open("history-data/"+symbol+".csv") as f:
         reader = csv.reader(f, delimiter=',')
