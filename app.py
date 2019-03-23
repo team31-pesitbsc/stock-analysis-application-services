@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify
 from common.constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
 from common.constants.datasource_constants import HOST, USER_NAME, PASSWORD, DATABASE
 from common.subroutines.feature_extraction import calculate_rsi, calculate_k_r, calculate_proc, calculate_obv, ema, fmacd
+from repository import company_repository, stock_repository, prediction_repository
 app = Flask(__name__)
 
 # ROUTES
@@ -14,7 +15,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def root():
-    return "Welcome to stock analysis application"
+    return "Welcome to the stock analysis application"
 
 
 @app.route("/insertStock", methods=['POST'])
@@ -133,12 +134,6 @@ def update_live():
         host="localhost", user="root", passwd="root", database="stock")
     mycursor = mydb.cursor()
 
-    required_days = max(TRADING_WINDOWS)
-    statement = 'SELECT * FROM stock '
-    statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" '
-    statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days)
-    mycursor.execute(statement)
-
     mydb.commit()
     live_statement = "UPDATE stock"
     live_statement += " SET Stock_close = %s, Stock_high = %s, Stock_low = %s, Stock_volume = %s"
@@ -162,81 +157,20 @@ def update_live():
 
 @app.route("/companies")
 def get_companies():
-    mydb = mysql.connector.connect(
-        host="localhost", user="root", passwd="root", database="stock")
-    mycursor = mydb.cursor()
-
-    statement = "SELECT * FROM company"
-    mycursor.execute(statement)
-    data = mycursor.fetchall()
-    companies = []
-    for row in data:
-        companies.append({"companySymbol": row[0], "companyName": row[1]})
-
-    mycursor.close()
-    mydb.close()
+    companies = company_repository.get_companies()
     return jsonify(companies)
 
 
-@app.route("/stocks/<stock_symbol>")
-def get_stock(stock_symbol):
-    mydb = mysql.connector.connect(
-        host="localhost", user="root", passwd="root", database="stock")
-    mycursor = mydb.cursor()
-
-    statement = "SELECT * FROM stock "
-    statement += 'WHERE Stock_symbol = "' + stock_symbol + '" '
-    statement += "ORDER BY Stock_date DESC LIMIT " + \
-        request.args['limit']+" OFFSET " + request.args['offset']
-
-    mycursor.execute(statement)
-    data = mycursor.fetchall()
-
-    stocks = []
-    for row in data:
-        stocks.append({
-            "companySymbol": row[0],
-            "stockDate": row[1],
-            "stockOpen": row[2],
-            "stockClose": row[3],
-            "stockHigh": row[4],
-            "stockLow": row[5],
-            "stockVolume": row[6],
-        })
-
-    mycursor.close()
-    mydb.close()
-    return jsonify(stocks)
+@app.route("/stocks")
+def get_stocks():
+    response = stock_repository.get_stocks(request)
+    return jsonify(response)
 
 
-@app.route("/predictions/<prediction_symbol>")
-def get_live(prediction_symbol):
-    mydb = mysql.connector.connect(
-        host="localhost", user="root", passwd="root", database="stock")
-    mycursor = mydb.cursor()
-
-    statement = 'SELECT * FROM prediction'
-    statement += ' WHERE Prediction_symbol = "' + prediction_symbol + '"'
-    mycursor.execute(statement)
-    data = mycursor.fetchall()
-
-    predictions = []
-    for row in data:
-        predictions.append({
-            "companySymbol": row[0],
-            "Classifier": row[1],
-            "TradingWindow": row[2],
-            "predictionLabel1": row[3],
-            "predictionAccuracy1": row[4],
-            "predictionLabel3": row[5],
-            "predictionAccuracy3": row[6],
-            "predictionLabel5": row[7],
-            "predictionAccuracy5": row[8],
-        })
-
-    mycursor.close()
-    mydb.close()
-    return jsonify(predictions)
+@app.route("/predictions")
+def get_predictions():
+    response = prediction_repository.get_predictions(request)
+    return jsonify(response)
 
 
 @app.route("/train")
