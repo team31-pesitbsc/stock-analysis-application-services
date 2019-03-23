@@ -76,7 +76,6 @@ def root():
     return "Welcome to stock analysis application"
 
 
-'''
 @app.route("/insertStock", methods=['POST'])
 def insert_history():
     mydb = mysql.connector.connect(
@@ -344,7 +343,7 @@ def train(error_day=-1):
     mycursor.close()
     mydb.close()
     return "Trained Model"
-'''
+
 
 if __name__ == '__main__':
     app.run()
