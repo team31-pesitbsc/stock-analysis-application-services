@@ -3,22 +3,22 @@ from common.constants.datasource_constants import HOST, USER_NAME, PASSWORD, DAT
 from dateutil import parser
 
 
-def get_stocks(request):
+def get_stocks(query_params):
     mydb = mysql.connector.connect(
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
     query = "SELECT * FROM stock WHERE Stock_symbol = %s ORDER BY Stock_date DESC LIMIT %s OFFSET %s"
     query_data = (
-        request.args['symbol'],
-        int(request.args['limit']),
-        int(request.args['offset'])
+        query_params['symbol'],
+        query_params['limit'],
+        query_params['offset']
     )
     mycursor.execute(query, query_data)
     data = mycursor.fetchall()
 
     response = {
-        "companySymbol": request.args['symbol'],
+        "companySymbol": query_params['symbol'],
         "stocks": []
     }
     for row in data:
@@ -34,6 +34,26 @@ def get_stocks(request):
     mycursor.close()
     mydb.close()
     return response
+
+
+def add_stock(request):
+    mydb = mysql.connector.connect(
+        host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
+    mycursor = mydb.cursor()
+    query = "INSERT INTO stock VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    query_data = (
+        request.form.get("symbol"),
+        request.form.get("date"),
+        request.form.get("open"),
+        request.form.get("close"),
+        request.form.get("high"),
+        request.form.get("low"),
+        request.form.get("volume"),
+    )
+    mycursor.execute(query, query_data)
+    mydb.commit()
+    mycursor.close()
+    mydb.close()
 
 
 def update_stock(request):

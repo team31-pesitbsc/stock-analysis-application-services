@@ -1,13 +1,11 @@
-import mysql.connector
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import precision_score, recall_score, f1_score
 import pickle
 from flask import Flask, request, jsonify
 from common.constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
 from common.constants.datasource_constants import HOST, USER_NAME, PASSWORD, DATABASE
 from common.subroutines.feature_extraction import calculate_rsi, calculate_k_r, calculate_proc, calculate_obv, ema, fmacd
-from repository import company_repository, stock_repository, prediction_repository
+from repository import company_repository, stock_repository, prediction_repository, feature_repository
 app = Flask(__name__)
 
 # ROUTES
@@ -22,52 +20,44 @@ def root():
 
 @app.route("/stocks")
 def get_stocks():
-    response = stock_repository.get_stocks(request)
+    # TODO - move request -> query_params conversion to service
+    query_params = {
+        "symbol": request.args['symbol'],
+        "limit": int(request.args['limit']),
+        "offset": int(request.args['offset'])
+    }
+    response = stock_repository.get_stocks(query_params)
     return jsonify(response)
 
 
 @app.route("/stocks", methods=['POST'])
-def insert_stock():
-    mydb = mysql.connector.connect(
-        host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
-    mycursor = mydb.cursor()
+def add_stock():
 
-    # STOCK QUOTE DB INSERTION
-    stock_statement = "INSERT INTO stock VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    stock_data = (
-        request.form.get("Symbol"),
-        request.form.get("Date"),
-        request.form.get("Open"),
-        request.form.get("Close"),
-        request.form.get("High"),
-        request.form.get("Low"),
-        request.form.get("Volume"),
-    )
-    mycursor.execute(stock_statement, stock_data)
-    mydb.commit()
-    # STOCK QUOTE DB INSERTION
-
-    required_days = max(TRADING_WINDOWS)
-    statement = 'SELECT * FROM stock '
-    statement += 'WHERE Stock_symbol = "'+request.form.get("Symbol")+'" '
-    statement += 'ORDER BY Stock_date DESC LIMIT '+str(required_days)
-    mycursor.execute(statement)
-    stock_data = mycursor.fetchall()
+    stock_repository.add_stock(request)
+    query_params = {
+        "symbol": request.form.get("symbol"),
+        "limit": max(TRADING_WINDOWS),
+        "offset": 0
+    }
+    stock_data = stock_repository.get_stocks(query_params)["stocks"]
 
     # FEATURE EXTRACTION
-    C = float(request.form.get("Close"))
+    C = float(request.form.get("close"))
     rsi = calculate_rsi(stock_data[:14])
     K, R = calculate_k_r(stock_data[:14], C)
     for trading_window in TRADING_WINDOWS:
         proc = calculate_proc(stock_data, trading_window, C)
-        statement = 'SELECT * FROM features '
-        statement += 'WHERE Feature_symbol = "'+request.form.get("Symbol")+'" '
-        statement += 'AND Trading_window = "'+str(trading_window)+'" '
-        statement += 'ORDER BY Feature_date DESC LIMIT '+str(required_days)
-        mycursor.execute(statement)
-        previous_features = mycursor.fetchall()
+        query_params = {
+            'symbol': request.form.get("symbol"),
+            'tradingWindow': str(trading_window),
+            'sortDirection': 'DESC',
+            'limit': max(TRADING_WINDOWS),
+            'offset': 0
+
+        }
+        previous_features = feature_repository.get_features(query_params)
         obv = calculate_obv(previous_features, stock_data, C, int(
-            request.form.get("Volume")), trading_window)
+            request.form.get("volume")), trading_window)
         ema_12, ema_26, macd = fmacd(previous_features, C)
         ema_9_macd = ema(9, previous_features[0][12], macd)
         if(macd >= ema_9_macd):
@@ -76,63 +66,54 @@ def insert_stock():
             buy_sell = -1
 
         class_label = 1
-        if C < stock_data[trading_window - 1][3]:
+        if C < stock_data[trading_window - 1]["close"]:
             class_label = -1
 
         # PREDICTION
-        for classifier_name in CLASSIFIERS:
-            prediction = {}
-            accuracy = {}
-            for forward_day in FORWARD_DAYS:
-                data_train = pd.DataFrame(
-                    [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
-                with open("trained-models/%(classifier_name)s_model.dump" % {'classifier_name': classifier_name}, "rb") as f:
-                    model = pickle.load(f)
-                    prediction[forward_day] = model.predict(data_train)[0]
-                    accuracy[forward_day] = max(
-                        list(model.predict_proba(data_train))[0])
+        if request.form.get("updatePrediction") == "True":
+            for classifier_name in CLASSIFIERS:
+                prediction = {}
+                accuracy = {}
+                for forward_day in FORWARD_DAYS:
+                    data_train = pd.DataFrame(
+                        [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
+                    with open("trained-models/%(classifier_name)s_model.dump" % {'classifier_name': classifier_name}, "rb") as f:
+                        model = pickle.load(f)
+                        prediction[forward_day] = model.predict(data_train)[0]
+                        accuracy[forward_day] = max(
+                            list(model.predict_proba(data_train))[0])
 
-            prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, "
-            prediction_statement += "Prediction_label_3 = %s, Prediction_accuracy_3 = %s, "
-            prediction_statement += "Prediction_label_5 = %s, Prediction_accuracy_5 = %s "
-            prediction_statement += "WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = %s"
-            prediction_data = (
-                str(prediction[1]),
-                str(accuracy[1]),
-                str(prediction[3]),
-                str(accuracy[3]),
-                str(prediction[5]),
-                str(accuracy[5]),
-                request.form.get("Symbol"),
-                str(trading_window),
-                classifier_name
-            )
-            mycursor.execute(prediction_statement, prediction_data)
-            mydb.commit()
+                prediction_data = {
+                    'label1': str(prediction[1]),
+                    'accuracy1': str(accuracy[1]),
+                    'label3': str(prediction[3]),
+                    'accuracy3': str(accuracy[3]),
+                    'label5': str(prediction[5]),
+                    'accuracy5': str(accuracy[5]),
+                    'symbol': request.form.get("symbol"),
+                    'tradingWindow': str(trading_window),
+                    'classifierName': classifier_name
+                }
+                prediction_repository.update_prediction(prediction_data)
 
         # FEATURE DB INSERTION
-        feature_statement = "INSERT INTO features VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        feature_data = (
-            request.form.get("Symbol"),
-            request.form.get("Date"),
-            str(trading_window),
-            str(rsi),
-            str(K),
-            str(R),
-            str(buy_sell),
-            str(proc),
-            str(obv),
-            str(class_label),
-            str(ema_12),
-            str(ema_26),
-            str(ema_9_macd)
-        )
-        mycursor.execute(feature_statement, feature_data)
-        mydb.commit()
-        # FEATURE DB INSERTION
+        feature_data = {
+            "symbol": request.form.get("symbol"),
+            "date": request.form.get("date"),
+            'tradingWindow': str(trading_window),
+            'rsi': str(rsi),
+            'K': str(K),
+            'R': str(R),
+            'buySell': str(buy_sell),
+            'proc': str(proc),
+            'obv': str(obv),
+            'classLabel': str(class_label),
+            'ema12': str(ema_12),
+            'ema26': str(ema_26),
+            'ema9macd': str(ema_9_macd),
+        }
+        feature_repository.add_feature(feature_data)
 
-    mycursor.close()
-    mydb.close()
     return "Inserted stock and feature data into DB"
 
 
@@ -159,27 +140,24 @@ def get_predictions():
     return jsonify(response)
 
 
+# TRAIN ROUTES
+
 @app.route("/train")
 def train():
 
     columns = ["Feature_symbol", "Feature_date", "Trading_window", "Feature_RSI", "Feature_K",
                "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV", "Feature_label", "x", "y", "z"]
-    mydb = mysql.connector.connect(
-        host="localhost", user="root", passwd="root", database="stock")
-    mycursor = mydb.cursor()
 
     training_data = pd.DataFrame(columns=columns)
-    statement = "SELECT * FROM company"
-    mycursor.execute(statement)
-    companies = mycursor.fetchall()
+    companies = company_repository.get_companies()
     for company in companies:
         for trading_window in TRADING_WINDOWS:
-            statement = "SELECT * FROM features "
-            statement += "WHERE Trading_window = " + \
-                str(trading_window)+" AND Feature_symbol = '"+company[0]+"' "
-            statement += "ORDER BY Feature_date"
-            mycursor.execute(statement)
-            data = mycursor.fetchall()
+            query_params = {
+                'symbol': company["symbol"],
+                'tradingWindow': str(trading_window),
+                'sortDirection': "ASC",
+            }
+            data = feature_repository.get_features(query_params)
             data = pd.DataFrame(data, columns=columns)
             for forward_day in FORWARD_DAYS:
                 forward_day_data = data.copy()
@@ -196,12 +174,10 @@ def train():
 
     for classifier_name, classifier in CLASSIFIERS.items():
         model = classifier.fit(x_train, y_train.values.ravel())
-        print(model.score(x_train, y_train.values.ravel()))
+        print(classifier_name + ":" +
+              str(model.score(x_train, y_train.values.ravel())))
         with open("trained-models/%(classifier_name)s_model.dump" % {"classifier_name": classifier_name}, "wb") as f:
             pickle.dump(model, f)
-
-    mycursor.close()
-    mydb.close()
     return "Trained Model"
 
 

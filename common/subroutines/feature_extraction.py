@@ -3,7 +3,7 @@ def calculate_rsi(data):
     avggain = 0
     avgloss = 0
     for i in range(0, len(data)-1):
-        diff = data[i][3] - data[i+1][3]
+        diff = data[i]["close"] - data[i+1]["close"]
         if diff < 0:
             avgloss += diff*(-1)
         elif diff > 0:
@@ -17,8 +17,8 @@ def calculate_rsi(data):
 
 
 def calculate_k_r(data, c):
-    H_14 = max([row[4] for row in data])
-    L_14 = min([row[5] for row in data])
+    H_14 = max([row["high"] for row in data])
+    L_14 = min([row["low"] for row in data])
     K = 0
     R = 0
     if (H_14 - L_14) != 0:
@@ -29,16 +29,16 @@ def calculate_k_r(data, c):
 
 def calculate_proc(data, period, c):
     proc = 0
-    if data[period-1][3] != 0:
-        proc = (c - data[period - 1][3]) / data[period-1][3]
+    if data[period-1]["close"] != 0:
+        proc = (c - data[period - 1]["close"]) / data[period-1]["close"]
     return proc
 
 
 def calculate_obv(features, history, c, volume, trading_window):
     obv = features[trading_window-1][8]
-    if c > history[trading_window-1][3]:
+    if c > history[trading_window-1]["close"]:
         obv = obv + volume
-    elif c < history[trading_window-1][3]:
+    elif c < history[trading_window-1]["close"]:
         obv = obv - volume
     return obv
 

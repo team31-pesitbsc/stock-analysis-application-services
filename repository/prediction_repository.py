@@ -39,3 +39,26 @@ def get_predictions(request):
     mycursor.close()
     mydb.close()
     return response
+
+
+def update_prediction(prediction):
+    mydb = mysql.connector.connect(
+        host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
+    mycursor = mydb.cursor()
+
+    prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, Prediction_label_3 = %s, Prediction_accuracy_3 = %s, Prediction_label_5 = %s, Prediction_accuracy_5 = %s WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = %s"
+    prediction_data = (
+        prediction['label1'],
+        prediction['accuracy1'],
+        prediction['label3'],
+        prediction['accuracy3'],
+        prediction['label5'],
+        prediction['accuracy5'],
+        str(prediction['symbol']),
+        prediction['tradingWindow'],
+        str(prediction['classifierName'])
+    )
+    mycursor.execute(prediction_statement, prediction_data)
+    mydb.commit()
+    mycursor.close()
+    mydb.close()

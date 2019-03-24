@@ -2,21 +2,22 @@ import csv
 import requests
 import sys
 
-URL = "http://192.168.2.6:5000/insertStock"
+URL = "http://192.168.2.6:5000/stocks"
 
-symbols = ["WIPRO"]
+symbols = ["INFY"]
 for symbol in symbols:
     with open("history-data/"+symbol+".csv") as f:
         reader = csv.reader(f, delimiter=',')
         for row in reader:
             data = {
-                "Symbol": symbol,
-                "Date": row[0],
-                "Open": row[1],
-                "Close": row[4],
-                "High": row[2],
-                "Low": row[3],
-                "Volume": row[5]
+                "symbol": symbol,
+                "date": row[0],
+                "open": row[1],
+                "close": row[4],
+                "high": row[2],
+                "low": row[3],
+                "volume": row[5],
+                "updatePrediction": False
             }
             r = requests.post(url=URL, data=data)
             print(r.text)
