@@ -8,7 +8,7 @@ def get_predictions(request):
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
-    query = 'SELECT * FROM prediction WHERE Prediction_symbol = "%s"' % request.args['symbol']
+    query = 'SELECT * FROM prediction WHERE `COMPANY_SYMBOL` = "%s"' % request.args['symbol']
     mycursor.execute(query)
     data = mycursor.fetchall()
 
@@ -46,7 +46,7 @@ def update_prediction(prediction):
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
-    prediction_statement = "UPDATE prediction SET Prediction_label_1 = %s, Prediction_accuracy_1 = %s, Prediction_label_3 = %s, Prediction_accuracy_3 = %s, Prediction_label_5 = %s, Prediction_accuracy_5 = %s WHERE Prediction_symbol = %s AND Trading_window = %s AND Classifier = %s"
+    prediction_statement = "UPDATE prediction SET `PREDICTION_LABEL_1` = %s, Prediction_accuracy_1 = %s, `PREDICTION_LABEL_3` = %s, `PREDICTION_ACCURACY_3` = %s, `PREDICTION_LABEL_5` = %s, `PREDICTION_ACCURACY_5` = %s WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s"
     prediction_data = (
         prediction['label1'],
         prediction['accuracy1'],

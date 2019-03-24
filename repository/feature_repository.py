@@ -8,7 +8,7 @@ def get_features(query_params):
     mycursor = mydb.cursor()
 
     if "limit" in query_params and "offset" in query_params:
-        query = 'SELECT * FROM features WHERE Feature_symbol = %s AND Trading_window = %s ORDER BY Feature_date ' + \
+        query = 'SELECT * FROM features WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s ORDER BY `DATE` ' + \
             query_params['sortDirection']+' LIMIT %s OFFSET %s'
         query_data = (
             query_params['symbol'],
@@ -17,7 +17,7 @@ def get_features(query_params):
             query_params['offset']
         )
     else:
-        query = 'SELECT * FROM features WHERE Feature_symbol = %s AND Trading_window = %s ORDER BY Feature_date ' + \
+        query = 'SELECT * FROM features WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s ORDER BY `DATE` ' + \
             query_params['sortDirection']
         query_data = (
             query_params['symbol'],

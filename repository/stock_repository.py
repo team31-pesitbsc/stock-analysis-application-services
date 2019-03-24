@@ -8,7 +8,7 @@ def get_stocks(query_params):
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
-    query = "SELECT * FROM stock WHERE Stock_symbol = %s ORDER BY Stock_date DESC LIMIT %s OFFSET %s"
+    query = "SELECT * FROM stock WHERE `COMPANY_SYMBOL` = %s ORDER BY `DATE` DESC LIMIT %s OFFSET %s"
     query_data = (
         query_params['symbol'],
         query_params['limit'],
@@ -61,7 +61,7 @@ def update_stock(request):
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
-    query = "UPDATE stock SET Stock_open=%s, Stock_close = %s, Stock_high = %s, Stock_low = %s, Stock_volume = %s WHERE Stock_symbol = %s AND Stock_date = %s"
+    query = "UPDATE stock SET `OPEN`=%s, `CLOSE` = %s, `HIGH` = %s, `LOW` = %s, `VOLUME` = %s WHERE `COMPANY_SYMBOL` = %s AND `DATE` = %s"
     query_data = (
         request.form.get("open"),
         request.form.get("close"),

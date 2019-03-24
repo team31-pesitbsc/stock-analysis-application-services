@@ -145,8 +145,8 @@ def get_predictions():
 @app.route("/train")
 def train():
 
-    columns = ["Feature_symbol", "Feature_date", "Trading_window", "Feature_RSI", "Feature_K",
-               "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV", "Feature_label", "x", "y", "z"]
+    columns = ["COMPANY_SYMBOL", "DATE", "TRADING_WINDOW", "RSI", "K",
+               "R", "SL", "PROC", "OBV", "LABEL", "x", "y", "z"]
 
     training_data = pd.DataFrame(columns=columns)
     companies = company_repository.get_companies()
@@ -161,16 +161,16 @@ def train():
             data = pd.DataFrame(data, columns=columns)
             for forward_day in FORWARD_DAYS:
                 forward_day_data = data.copy()
-                forward_day_data.Feature_label = forward_day_data.Feature_label.shift(
+                forward_day_data.LABEL = forward_day_data.LABEL.shift(
                     -1*forward_day)
                 forward_day_data = forward_day_data[:-1*forward_day]
                 forward_day_data.insert(3, 'Forward_day', forward_day)
                 training_data = training_data.append(
                     forward_day_data, ignore_index=True, sort=True)
 
-    x_train = training_data[["Trading_window", "Forward_day", "Feature_RSI",
-                             "Feature_K", "Feature_R", "Feature_SL", "Feature_PROC", "Feature_OBV"]]
-    y_train = training_data[["Feature_label"]]
+    x_train = training_data[["TRADING_WINDOW", "Forward_day", "RSI",
+                             "K", "R", "SL", "PROC", "OBV"]]
+    y_train = training_data[["LABEL"]]
 
     for classifier_name, classifier in CLASSIFIERS.items():
         model = classifier.fit(x_train, y_train.values.ravel())
