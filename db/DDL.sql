@@ -4,8 +4,8 @@ USE stock;
 
 
 CREATE TABLE company (
-	Company_symbol VARCHAR(10) PRIMARY KEY,
-	Company_name VARCHAR(50) NOT NULL
+	`SYMBOL` VARCHAR(10) PRIMARY KEY,
+	`NAME` VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE stock (
@@ -17,7 +17,7 @@ CREATE TABLE stock (
 	Stock_low DOUBLE NOT NULL,
 	Stock_volume BIGINT(10) NOT NULL,
 	PRIMARY KEY (Stock_symbol, Stock_date),
-	FOREIGN KEY (Stock_symbol) REFERENCES company (Company_symbol) ON DELETE CASCADE
+	FOREIGN KEY (Stock_symbol) REFERENCES company (`SYMBOL`) ON DELETE CASCADE
 );
 
 CREATE TABLE prediction (
@@ -31,7 +31,7 @@ CREATE TABLE prediction (
 	Prediction_label_5 INT NOT NULL,
 	Prediction_accuracy_5 DOUBLE NOT NULL,
 	PRIMARY KEY (Prediction_symbol, Classifier, Trading_window),
-	FOREIGN KEY (Prediction_symbol) REFERENCES stock (Stock_symbol) ON DELETE CASCADE
+	FOREIGN KEY (Prediction_symbol) REFERENCES company (`SYMBOL`) ON DELETE CASCADE
 );
 
 CREATE TABLE features (
@@ -49,7 +49,7 @@ CREATE TABLE features (
 	Feature_ema_26_c DOUBLE NOT NULL,
 	Feature_ema_9_macd DOUBLE NOT NULL,
 	PRIMARY KEY (Feature_symbol, Feature_date, Trading_window),
-	FOREIGN KEY (Feature_symbol) REFERENCES company (Company_symbol) ON DELETE CASCADE
+	FOREIGN KEY (Feature_symbol) REFERENCES company (`SYMBOL`) ON DELETE CASCADE
 );
 
 -- TRIGGER AND PROCEDURE ON INSERTION OF NEW COMPANY
@@ -100,6 +100,6 @@ CREATE TRIGGER onNewCompanyTrigger
 AFTER INSERT ON company
 FOR EACH ROW
 BEGIN
-	call onNewCompany(NEW.Company_symbol);
+	call onNewCompany(NEW.`SYMBOL`);
 END//
 delimiter ;

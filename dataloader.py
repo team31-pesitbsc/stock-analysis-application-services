@@ -4,7 +4,7 @@ import sys
 
 URL = "http://192.168.2.6:5000/stocks"
 
-symbols = ["INFY"]
+symbols = ["INFY", "RCOM", "TATAMOTORS", "WIPRO", "BHEL", "BPCL"]
 for symbol in symbols:
     with open("history-data/"+symbol+".csv") as f:
         reader = csv.reader(f, delimiter=',')
@@ -13,9 +13,9 @@ for symbol in symbols:
                 "symbol": symbol,
                 "date": row[0],
                 "open": row[1],
-                "close": row[4],
-                "high": row[2],
-                "low": row[3],
+                "close": row[2],
+                "high": row[3],
+                "low": row[4],
                 "volume": row[5],
                 "updatePrediction": False
             }

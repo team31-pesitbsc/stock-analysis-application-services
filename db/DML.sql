@@ -3,4 +3,6 @@ values
     ("RCOM", "Reliance communications LTD"),
     ("TATAMOTORS", "Tata Motors"),
     ("WIPRO", "Wipro"),
-    ("INFY", "Infosys ltd");
+    ("INFY", "Infosys ltd"),
+	("BHEL", "BHARAT HEAVY ELECTRICALS LTD"),
+    ("BPCL","BHARAT PETROLEUM CORPORATION LTD");
