@@ -2,7 +2,7 @@ import csv
 import requests
 import sys
 
-URL = "http://192.168.2.6:5000/stocks"
+URL = "http://localhost:5000/stocks"
 
 symbols = ["INFY"]
 for symbol in symbols:

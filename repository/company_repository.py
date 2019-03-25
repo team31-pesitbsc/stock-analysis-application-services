@@ -6,7 +6,7 @@ def get_companies():
     mydb = mysql.connector.connect(
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
-    query = "SELECT * FROM company"
+    query = "SELECT * FROM company ORDER BY SYMBOL"
     mycursor.execute(query)
     data = mycursor.fetchall()
     companies = []
