@@ -4,7 +4,7 @@ import sys
 
 URL = "http://192.168.2.6:5000/stocks"
 
-symbols = ["INFY", "RCOM", "TATAMOTORS", "WIPRO", "BHEL", "BPCL"]
+symbols = ["INFY"]
 for symbol in symbols:
     with open("history-data/"+symbol+".csv") as f:
         reader = csv.reader(f, delimiter=',')
