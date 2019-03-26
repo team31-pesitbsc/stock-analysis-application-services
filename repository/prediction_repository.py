@@ -11,30 +11,32 @@ def get_predictions(request):
     query = 'SELECT * FROM prediction WHERE `COMPANY_SYMBOL` = "%s"' % request.args['symbol']
     mycursor.execute(query)
     data = mycursor.fetchall()
-
     response = {
         "companySymbol": request.args['symbol'],
-        "predictions": {
-            classifier_name: {
-                trading_window: {
-                    forward_day: {
-                        'label': None,
-                        'accuracy': None
-                    } for forward_day in FORWARD_DAYS
-                } for trading_window in TRADING_WINDOWS
-            } for classifier_name in CLASSIFIERS
-        }
+        "predictions": []
     }
-
     for row in data:
-        response['predictions'][row[1]][row[2]][1]['label'] = row[3]
-        response['predictions'][row[1]][row[2]][1]['accuracy'] = row[4]
-
-        response['predictions'][row[1]][row[2]][3]['label'] = row[5]
-        response['predictions'][row[1]][row[2]][3]['accuracy'] = row[6]
-
-        response['predictions'][row[1]][row[2]][5]['label'] = row[7]
-        response['predictions'][row[1]][row[2]][5]['accuracy'] = row[8]
+        response['predictions'].append({
+            'label': row[3],
+            'accuracy': row[4],
+            'classifier': row[1],
+            'tradingWindow': row[2],
+            'forwardDay': 1,
+        })
+        response['predictions'].append({
+            'label': row[5],
+            'accuracy': row[6],
+            'classifier': row[1],
+            'tradingWindow': row[2],
+            'forwardDay': 3,
+        })
+        response['predictions'].append({
+            'label': row[7],
+            'accuracy': row[8],
+            'classifier': row[1],
+            'tradingWindow': row[2],
+            'forwardDay': 5,
+        })
 
     mycursor.close()
     mydb.close()
