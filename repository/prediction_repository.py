@@ -17,25 +17,11 @@ def get_predictions(request):
     }
     for row in data:
         response['predictions'].append({
-            'label': row[3],
-            'accuracy': row[4],
+            'label': row[4],
+            'accuracy': row[5],
             'classifier': row[1],
             'tradingWindow': row[2],
-            'forwardDay': 1,
-        })
-        response['predictions'].append({
-            'label': row[5],
-            'accuracy': row[6],
-            'classifier': row[1],
-            'tradingWindow': row[2],
-            'forwardDay': 3,
-        })
-        response['predictions'].append({
-            'label': row[7],
-            'accuracy': row[8],
-            'classifier': row[1],
-            'tradingWindow': row[2],
-            'forwardDay': 5,
+            'forwardDay': row[3],
         })
 
     mycursor.close()
@@ -48,17 +34,14 @@ def update_prediction(prediction):
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
-    prediction_statement = "UPDATE prediction SET `PREDICTION_LABEL_1` = %s, Prediction_accuracy_1 = %s, `PREDICTION_LABEL_3` = %s, `PREDICTION_ACCURACY_3` = %s, `PREDICTION_LABEL_5` = %s, `PREDICTION_ACCURACY_5` = %s WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s"
+    prediction_statement = "UPDATE prediction SET `LABEL` = %s, `ACCURACY` = %s, WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s AND `FORWARD_DAY` = %s"
     prediction_data = (
-        prediction['label1'],
-        prediction['accuracy1'],
-        prediction['label3'],
-        prediction['accuracy3'],
-        prediction['label5'],
-        prediction['accuracy5'],
+        prediction['label'],
+        prediction['accuracy'],
         str(prediction['symbol']),
         prediction['tradingWindow'],
-        str(prediction['classifierName'])
+        str(prediction['classifierName']),
+        prediction['forwardDay']
     )
     mycursor.execute(prediction_statement, prediction_data)
     mydb.commit()
