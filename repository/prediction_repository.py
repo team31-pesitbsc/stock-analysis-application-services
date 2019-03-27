@@ -34,13 +34,13 @@ def update_prediction(prediction):
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
-    prediction_statement = "UPDATE prediction SET `LABEL` = %s, `ACCURACY` = %s, WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s AND `FORWARD_DAY` = %s"
+    prediction_statement = "UPDATE prediction SET `LABEL` = %s, `ACCURACY` = %s WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s AND `FORWARD_DAY` = %s"
     prediction_data = (
         prediction['label'],
         prediction['accuracy'],
-        str(prediction['symbol']),
+        prediction['symbol'],
         prediction['tradingWindow'],
-        str(prediction['classifierName']),
+        prediction['classifierName'],
         prediction['forwardDay']
     )
     mycursor.execute(prediction_statement, prediction_data)

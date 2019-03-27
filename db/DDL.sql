@@ -71,23 +71,53 @@ BEGIN
 		SET y = y + 1;
 	END WHILE;
     
-	INSERT INTO prediction VALUES (symbol, "RF", 3, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, "GBDT", 3, 0, 0, 0, 0, 0, 0);
+	INSERT INTO prediction VALUES (symbol, "RF", 3, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 3, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 3, 5, 0 ,0);
     
-	INSERT INTO prediction VALUES (symbol, "RF", 5, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, "GBDT", 5, 0, 0, 0, 0, 0, 0);
+    INSERT INTO prediction VALUES (symbol, "RF", 5, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 5, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 5, 5, 0 ,0);
     
-	INSERT INTO prediction VALUES (symbol, "RF", 15, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, "GBDT", 15, 0, 0, 0, 0, 0, 0);
+    INSERT INTO prediction VALUES (symbol, "RF", 15, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 15, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 15, 5, 0 ,0);
     
-	INSERT INTO prediction VALUES (symbol, "RF", 30, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, "GBDT", 30, 0, 0, 0, 0, 0, 0);
+    INSERT INTO prediction VALUES (symbol, "RF", 30, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 30, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 30, 5, 0 ,0);
+
+	INSERT INTO prediction VALUES (symbol, "RF", 60, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 60, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 60, 5, 0 ,0);
+
+	INSERT INTO prediction VALUES (symbol, "RF", 90, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 90, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "RF", 90, 5, 0 ,0);
+
+	INSERT INTO prediction VALUES (symbol, "GBDT", 3, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 3, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 3, 5, 0 ,0);
     
-	INSERT INTO prediction VALUES (symbol, "RF", 60, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, "GBDT", 60, 0, 0, 0, 0, 0, 0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 5, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 5, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 5, 5, 0 ,0);
     
-	INSERT INTO prediction VALUES (symbol, "RF", 90, 0, 0, 0, 0, 0, 0);
-	INSERT INTO prediction VALUES (symbol, "GBDT", 90, 0, 0, 0, 0, 0, 0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 15, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 15, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 15, 5, 0 ,0);
+    
+    INSERT INTO prediction VALUES (symbol, "GBDT", 30, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 30, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 30, 5, 0 ,0);
+
+	INSERT INTO prediction VALUES (symbol, "GBDT", 60, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 60, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 60, 5, 0 ,0);
+
+	INSERT INTO prediction VALUES (symbol, "GBDT", 90, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 90, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "GBDT", 90, 5, 0 ,0);
 END//
 
 CREATE TRIGGER onNewCompanyTrigger

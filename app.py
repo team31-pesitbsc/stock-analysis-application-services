@@ -72,29 +72,24 @@ def add_stock():
         # PREDICTION
         if request.form.get("updatePrediction") == "True":
             for classifier_name in CLASSIFIERS:
-                prediction = {}
-                accuracy = {}
                 for forward_day in FORWARD_DAYS:
                     data_train = pd.DataFrame(
                         [[trading_window, forward_day, rsi, K, R, buy_sell, proc, obv]])
                     with open("trained-models/%(classifier_name)s_model.dump" % {'classifier_name': classifier_name}, "rb") as f:
                         model = pickle.load(f)
-                        prediction[forward_day] = model.predict(data_train)[0]
-                        accuracy[forward_day] = max(
+                        prediction = model.predict(data_train)[0]
+                        accuracy = max(
                             list(model.predict_proba(data_train))[0])
-
-                prediction_data = {
-                    'label1': str(prediction[1]),
-                    'accuracy1': str(accuracy[1]),
-                    'label3': str(prediction[3]),
-                    'accuracy3': str(accuracy[3]),
-                    'label5': str(prediction[5]),
-                    'accuracy5': str(accuracy[5]),
-                    'symbol': request.form.get("symbol"),
-                    'tradingWindow': str(trading_window),
-                    'classifierName': classifier_name
-                }
-                prediction_repository.update_prediction(prediction_data)
+                        prediction_data = {
+                            'label': str(prediction),
+                            'accuracy': str(accuracy),
+                            'forwardDay': str(forward_day),
+                            'symbol': request.form.get("symbol"),
+                            'tradingWindow': str(trading_window),
+                            'classifierName': classifier_name
+                        }
+                        prediction_repository.update_prediction(
+                            prediction_data)
 
         # FEATURE DB INSERTION
         feature_data = {
