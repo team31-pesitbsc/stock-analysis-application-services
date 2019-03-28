@@ -6,6 +6,5 @@ FORWARD_DAYS = [1, 3, 5]
 CLASSIFIERS = {
     "RF": RandomForestClassifier(n_estimators=100, max_depth=10),
     "GBDT": GradientBoostingClassifier(n_estimators=100, max_depth=10, loss="exponential")
+    "HYBRID": HybridClassifier(rf_params = {'n_estimators':100, 'max_depth':10}, gbdt_params = {'n_estimators':100, 'max_depth':10, 'loss':'exponential'})
 }
-# TODO - add this classifier to the current list of classifiers
-XYZ = HybridClassifier()
