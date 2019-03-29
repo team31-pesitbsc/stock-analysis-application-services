@@ -26,7 +26,7 @@ CREATE TABLE prediction (
 	`TRADING_WINDOW` INT NOT NULL,
 	`FORWARD_DAY` INT NOT NULL,
 	`LABEL` INT NOT NULL,
-	`ACCURACY` DOUBLE NOT NULL,
+	`PROBABILITY` DOUBLE NOT NULL,
 	PRIMARY KEY (`COMPANY_SYMBOL`, `CLASSIFIER`, `TRADING_WINDOW`,`FORWARD_DAY`),
 	FOREIGN KEY (`COMPANY_SYMBOL`) REFERENCES company (`SYMBOL`) ON DELETE CASCADE
 );
@@ -118,6 +118,31 @@ BEGIN
 	INSERT INTO prediction VALUES (symbol, "GBDT", 90, 1, 0 ,0);
     INSERT INTO prediction VALUES (symbol, "GBDT", 90, 3, 0 ,0);
     INSERT INTO prediction VALUES (symbol, "GBDT", 90, 5, 0 ,0);
+
+
+	INSERT INTO prediction VALUES (symbol, "HYBRID", 3, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 3, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 3, 5, 0 ,0);
+    
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 5, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 5, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 5, 5, 0 ,0);
+    
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 15, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 15, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 15, 5, 0 ,0);
+    
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 30, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 30, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 30, 5, 0 ,0);
+
+	INSERT INTO prediction VALUES (symbol, "HYBRID", 60, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 60, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 60, 5, 0 ,0);
+
+	INSERT INTO prediction VALUES (symbol, "HYBRID", 90, 1, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 90, 3, 0 ,0);
+    INSERT INTO prediction VALUES (symbol, "HYBRID", 90, 5, 0 ,0);
 END//
 
 CREATE TRIGGER onNewCompanyTrigger

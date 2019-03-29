@@ -78,11 +78,11 @@ def add_stock():
                     with open("trained-models/%(classifier_name)s_model.dump" % {'classifier_name': classifier_name}, "rb") as f:
                         model = pickle.load(f)
                         prediction = model.predict(data_train)[0]
-                        accuracy = max(
+                        probability = max(
                             list(model.predict_proba(data_train))[0])
                         prediction_data = {
                             'label': str(prediction),
-                            'accuracy': str(accuracy),
+                            'probability': str(probability),
                             'forwardDay': str(forward_day),
                             'symbol': request.form.get("symbol"),
                             'tradingWindow': str(trading_window),

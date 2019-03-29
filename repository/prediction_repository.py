@@ -18,7 +18,7 @@ def get_predictions(request):
     for row in data:
         response['predictions'].append({
             'label': row[4],
-            'accuracy': row[5],
+            'probability': row[5],
             'classifier': row[1],
             'tradingWindow': row[2],
             'forwardDay': row[3],
@@ -37,7 +37,7 @@ def update_prediction(prediction):
     prediction_statement = "UPDATE prediction SET `LABEL` = %s, `ACCURACY` = %s WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s AND `FORWARD_DAY` = %s"
     prediction_data = (
         prediction['label'],
-        prediction['accuracy'],
+        prediction['probability'],
         prediction['symbol'],
         prediction['tradingWindow'],
         prediction['classifierName'],
