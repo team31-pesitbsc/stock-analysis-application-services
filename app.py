@@ -177,4 +177,4 @@ def train():
 
 
 if __name__ == '__main__':
-    app.run(host="192.168.2.6", debug=True)
+    app.run()
