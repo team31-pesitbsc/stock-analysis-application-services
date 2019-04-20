@@ -4,6 +4,7 @@ import pickle
 from flask import Flask, request, jsonify
 from common.constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
 from common.subroutines.feature_extraction import calculate_rsi, calculate_k_r, calculate_proc, calculate_obv, ema, fmacd
+from common.exceptions import StockUpdateException
 from repository import company_repository, stock_repository, prediction_repository, feature_repository
 import os
 
@@ -12,7 +13,7 @@ app = Flask(__name__)
 # ROUTES
 @app.route("/")
 def root():
-    return "Welcome to the stock analysis "+os.getenv('ENVIRONMENT')+" application!"
+    return "Welcome to the stock analysis application running in "+os.getenv('ENVIRONMENT')+"!"
 
 # STOCK ROUTES
 @app.route("/stocks")
@@ -121,20 +122,17 @@ def update_stock():
         stock_repository.update_stock(request)
         return "Updated stock data"
     else:
-        raise Exception("only stock quote of latest day can be updated")
+        raise StockUpdateException(latest_stock['date'],
+                                   request.form.get('date'))
 
 
 # COMPANY ROUTES
-
-
 @app.route("/companies")
 def get_companies():
     companies = company_repository.get_companies()
     return jsonify(companies)
 
 # PREDICTION ROUTES
-
-
 @app.route("/predictions")
 def get_predictions():
     response = prediction_repository.get_predictions(request)
@@ -142,7 +140,6 @@ def get_predictions():
 
 
 # TRAIN ROUTES
-
 @app.route("/train")
 def train():
 

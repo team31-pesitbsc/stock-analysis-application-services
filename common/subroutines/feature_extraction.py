@@ -1,4 +1,3 @@
-
 def calculate_rsi(data):
     avggain = 0
     avgloss = 0
