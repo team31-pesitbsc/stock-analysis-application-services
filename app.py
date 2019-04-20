@@ -3,24 +3,22 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 import pickle
 from flask import Flask, request, jsonify
 from common.constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
-from common.constants.datasource_constants import HOST, USER_NAME, PASSWORD, DATABASE
 from common.subroutines.feature_extraction import calculate_rsi, calculate_k_r, calculate_proc, calculate_obv, ema, fmacd
 from repository import company_repository, stock_repository, prediction_repository, feature_repository
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 app = Flask(__name__)
 
 # ROUTES
-
-
 @app.route("/")
 def root():
-    return "Welcome to the stock analysis application"
+    return "Welcome to the stock analysis "+os.getenv('ENVIRONMENT')+" application!"
 
 # STOCK ROUTES
-
-
 @app.route("/stocks")
 def get_stocks():
-    # TODO - move request -> query_params conversion to service
     query_params = {
         "symbol": request.args['symbol'],
         "limit": int(request.args['limit']),
@@ -114,9 +112,19 @@ def add_stock():
 
 @app.route("/stocks", methods=['PUT'])
 def update_stock():
-    # TODO - update stock only if it is live or throw error
-    stock_repository.update_stock(request)
-    return "Updated Live data"
+    query_params = {
+        "symbol": request.form.get("symbol"),
+        "limit": 2,
+        "offset": 0
+    }
+    latest_stock = stock_repository.get_stocks(query_params)['stocks'][0]
+    # TODO - find better way to compare dates
+    if str(request.form.get('date')) == str(latest_stock['date']):
+        stock_repository.update_stock(request)
+        return "Updated stock data"
+    else:
+        raise Exception("only stock quote of latest day can be updated")
+
 
 # COMPANY ROUTES
 
