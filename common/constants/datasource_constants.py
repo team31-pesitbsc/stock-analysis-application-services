@@ -1,6 +1,6 @@
 import os
 
-HOST = os.getenv("HOST")
-USER_NAME = os.getenv("USER_NAME")
-PASSWORD = os.getenv("PASSWORD")
-DATABASE = os.getenv("DATABASE")
+HOST = os.getenv("DB_HOST")
+USER_NAME = os.getenv("DB_USERNAME")
+PASSWORD = os.getenv("DB_PASSWORD")
+DATABASE = os.getenv("DB_DATABASE")

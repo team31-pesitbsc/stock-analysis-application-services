@@ -6,6 +6,5 @@ mysql-connector==2.1.7
 mysqlclient==1.3.12
 scikit_learn==0.20.3
 gunicorn==19.7.1
-python-dotenv==0.10.1
 python-dateutil==2.6.1
 python-interface==1.5.1

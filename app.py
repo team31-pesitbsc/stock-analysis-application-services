@@ -5,10 +5,8 @@ from flask import Flask, request, jsonify
 from common.constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
 from common.subroutines.feature_extraction import calculate_rsi, calculate_k_r, calculate_proc, calculate_obv, ema, fmacd
 from repository import company_repository, stock_repository, prediction_repository, feature_repository
-from dotenv import load_dotenv
 import os
 
-load_dotenv()
 app = Flask(__name__)
 
 # ROUTES
