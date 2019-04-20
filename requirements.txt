@@ -8,3 +8,6 @@ scikit_learn==0.20.3
 gunicorn==19.7.1
 python-dateutil==2.6.1
 python-interface==1.5.1
+
+# DEV REQUIREMENTS
+pytest==4.4.1
