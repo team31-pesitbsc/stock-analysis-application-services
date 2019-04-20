@@ -13,7 +13,8 @@ def get_companies():
     for row in data:
         companies.append({
             "symbol": row[0],
-            "name": row[1]
+            "name": row[1],
+            "bse_code": row[2]
         })
     mycursor.close()
     mydb.close()
