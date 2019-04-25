@@ -34,7 +34,7 @@ def update_prediction(prediction):
         host=HOST, user=USER_NAME, passwd=PASSWORD, database=DATABASE)
     mycursor = mydb.cursor()
 
-    prediction_statement = "UPDATE prediction SET `LABEL` = %s, `ACCURACY` = %s WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s AND `FORWARD_DAY` = %s"
+    prediction_statement = "UPDATE prediction SET `LABEL` = %s, `PROBABILITY` = %s WHERE `COMPANY_SYMBOL` = %s AND `TRADING_WINDOW` = %s AND `CLASSIFIER` = %s AND `FORWARD_DAY` = %s"
     prediction_data = (
         prediction['label'],
         prediction['probability'],
