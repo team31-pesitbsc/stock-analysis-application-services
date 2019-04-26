@@ -1,4 +1,5 @@
 *.pyc
 .vscode/settings.json
 venv/*
+.idea/*
 .env 
