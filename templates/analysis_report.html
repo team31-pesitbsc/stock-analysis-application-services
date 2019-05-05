@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+{% for classifier, data in analysis_data.items() %}
+<div>
+  <h1>{{ classifier }}</h1>
+  <h2>ACCURACY : {{ data["accuracy"] }}</h2>
+  <h2>CONFUSION MATRIX :</h2>
+
+  <table
+    class="wikitable"
+    style="border:1px solid black; float:left; margin-top:0;"
+  >
+    <tbody>
+      <tr>
+        <th style="background:white; border:none;" colspan="2" rowspan="2"></th>
+        <th colspan="2" style="background:none;">Actual class</th>
+      </tr>
+      <tr>
+        <th style="border:1px solid black">Negative</th>
+
+        <th style="border:1px solid black">Positive</th>
+      </tr>
+      <tr>
+        <th rowspan="2" style="height:6em;">
+          <div
+            style="display: inline-block; -ms-transform: rotate(-90deg); -webkit-transform: rotate(-90deg); transform: rotate(-90deg);;"
+          >
+            Predicted<br />
+            class
+          </div>
+        </th>
+        <th style="border:1px solid black">Negative</th>
+        <td style="border:1px solid black">
+          {{ data["confusion_matrix"]["tn"] }}
+        </td>
+        <td style="border:1px solid black">
+          {{ data["confusion_matrix"]["fn"] }}
+        </td>
+      </tr>
+      <tr>
+        <th style="border:1px solid black">Positive</th>
+        <td style="border:1px solid black">
+          {{ data["confusion_matrix"]["fp"] }}
+        </td>
+        <td style="border:1px solid black">
+          {{ data["confusion_matrix"]["tp"] }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <img src="/static/images/{{ classifier }}.png" />
+</div>
+<br /><br /><br /><br /><br /><br />
+{% endfor %}

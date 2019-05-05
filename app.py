@@ -1,12 +1,14 @@
 import pandas as pd
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_curve, auc, confusion_matrix
+from sklearn.model_selection import train_test_split
 import pickle
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from common.constants.app_constants import TRADING_WINDOWS, FORWARD_DAYS, CLASSIFIERS
 from common.subroutines.feature_extraction import calculate_rsi, calculate_k_r, calculate_proc, calculate_obv, ema, fmacd
 from common.exceptions import StockUpdateException
 from repository import company_repository, stock_repository, prediction_repository, feature_repository
 import os
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 
@@ -179,5 +181,74 @@ def train():
     return "Trained Model"
 
 
+@app.route("/analysis")
+def analysis():
+    columns = ["COMPANY_SYMBOL", "DATE", "TRADING_WINDOW", "RSI", "K",
+               "R", "SL", "PROC", "OBV", "LABEL", "x", "y", "z"]
+
+    training_data = pd.DataFrame(columns=columns)
+    companies = company_repository.get_companies()
+    for company in companies:
+        for trading_window in TRADING_WINDOWS:
+            query_params = {
+                'symbol': company["symbol"],
+                'tradingWindow': str(trading_window),
+                'sortDirection': "ASC",
+            }
+            data = feature_repository.get_features(query_params)
+            data = pd.DataFrame(data, columns=columns)
+            for forward_day in FORWARD_DAYS:
+                forward_day_data = data.copy()
+                forward_day_data.LABEL = forward_day_data.LABEL.shift(
+                    -1*forward_day)
+                forward_day_data = forward_day_data[:-1*forward_day]
+                forward_day_data.insert(3, 'Forward_day', forward_day)
+                training_data = training_data.append(
+                    forward_day_data, ignore_index=True, sort=True)
+
+    X = training_data[["TRADING_WINDOW", "Forward_day", "RSI",
+                       "K", "R", "SL", "PROC", "OBV"]]
+    Y = training_data[["LABEL"]]
+
+    analysis_data = {}
+    x_train, x_test, y_train, y_test = train_test_split(
+        X, Y, test_size=0.25, random_state=42)
+
+    for classifier_name, classifier in CLASSIFIERS.items():
+        if classifier_name != "HYBRID":
+            analysis_data[classifier_name] = {}
+            model = classifier.fit(x_train, y_train.values.ravel())
+            analysis_data[classifier_name]['accuracy'] = model.score(
+                x_test, y_test.values.ravel())
+            y_pred = model.predict(x_test)
+            tn, fp, fn, tp = confusion_matrix(
+                y_test.values.ravel(), y_pred).ravel()
+            analysis_data[classifier_name]['confusion_matrix'] = {
+                'tn': str(tn),
+                'tp': str(tp),
+                'fn': str(fn),
+                'fp': str(fp)
+            }
+
+            probs = model.predict_proba(x_test)
+            preds = probs[:, 1]
+            fpr, tpr, threshold = roc_curve(y_test.values.ravel(), preds)
+            analysis_data[classifier_name]['roc_auc'] = auc(fpr, tpr)
+
+            plt.title('Receiver Operating Characteristic')
+            plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' %
+                     analysis_data[classifier_name]['roc_auc'])
+            plt.legend(loc='lower right')
+            plt.plot([0, 1], [0, 1], 'r--')
+            plt.xlim([0, 1])
+            plt.ylim([0, 1])
+            plt.ylabel('True Positive Rate')
+            plt.xlabel('False Positive Rate')
+            plt.savefig('static/images/'+classifier_name+'.png')
+            plt.clf()
+
+    return render_template("analysis_report.html", analysis_data=analysis_data)
+
+
 if __name__ == '__main__':
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", debug=True)
