@@ -214,38 +214,38 @@ def analysis():
     x_train, x_test, y_train, y_test = train_test_split(
         X, Y, test_size=0.25, random_state=42)
 
-    for classifier_name, classifier in CLASSIFIERS.items():
-        if classifier_name != "HYBRID":
-            analysis_data[classifier_name] = {}
-            model = classifier.fit(x_train, y_train.values.ravel())
-            analysis_data[classifier_name]['accuracy'] = model.score(
-                x_test, y_test.values.ravel())
-            y_pred = model.predict(x_test)
-            tn, fp, fn, tp = confusion_matrix(
-                y_test.values.ravel(), y_pred).ravel()
-            analysis_data[classifier_name]['confusion_matrix'] = {
-                'tn': str(tn),
-                'tp': str(tp),
-                'fn': str(fn),
-                'fp': str(fp)
-            }
+    classifier_name, classifier = request.args['classifier'], CLASSIFIERS[request.args['classifier']]
 
-            probs = model.predict_proba(x_test)
-            preds = probs[:, 1]
-            fpr, tpr, threshold = roc_curve(y_test.values.ravel(), preds)
-            analysis_data[classifier_name]['roc_auc'] = auc(fpr, tpr)
+    analysis_data[classifier_name] = {}
+    model = classifier.fit(x_train, y_train.values.ravel())
+    analysis_data[classifier_name]['accuracy'] = model.score(
+        x_test, y_test.values.ravel())
+    y_pred = model.predict(x_test)
+    tn, fp, fn, tp = confusion_matrix(
+        y_test.values.ravel(), y_pred).ravel()
+    analysis_data[classifier_name]['confusion_matrix'] = {
+        'tn': str(tn),
+        'tp': str(tp),
+        'fn': str(fn),
+        'fp': str(fp)
+    }
 
-            plt.title('Receiver Operating Characteristic')
-            plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' %
-                     analysis_data[classifier_name]['roc_auc'])
-            plt.legend(loc='lower right')
-            plt.plot([0, 1], [0, 1], 'r--')
-            plt.xlim([0, 1])
-            plt.ylim([0, 1])
-            plt.ylabel('True Positive Rate')
-            plt.xlabel('False Positive Rate')
-            plt.savefig('static/images/'+classifier_name+'.png')
-            plt.clf()
+    probs = model.predict_proba(x_test)
+    preds = probs[:, 1]
+    fpr, tpr, threshold = roc_curve(y_test.values.ravel(), preds)
+    analysis_data[classifier_name]['roc_auc'] = auc(fpr, tpr)
+
+    plt.title('Receiver Operating Characteristic')
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' %
+             analysis_data[classifier_name]['roc_auc'])
+    plt.legend(loc='lower right')
+    plt.plot([0, 1], [0, 1], 'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.savefig('static/images/'+classifier_name+'.png')
+    plt.clf()
 
     return render_template("analysis_report.html", analysis_data=analysis_data)
 

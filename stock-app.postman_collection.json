@@ -1,0 +1,307 @@
+{
+	"info": {
+		"_postman_id": "1d8b74ad-d728-4df7-a473-d09dfae9ea16",
+		"name": "stock-app",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "companies - get",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{DEV_URL}}/companies",
+					"host": [
+						"{{DEV_URL}}"
+					],
+					"path": [
+						"companies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "root",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{DEV_URL}}",
+					"host": [
+						"{{DEV_URL}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "stocks - get",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{DEV_URL}}/stocks?symbol=INFY&limit=30&offset=0",
+					"host": [
+						"{{DEV_URL}}"
+					],
+					"path": [
+						"stocks"
+					],
+					"query": [
+						{
+							"key": "symbol",
+							"value": "INFY"
+						},
+						{
+							"key": "limit",
+							"value": "30"
+						},
+						{
+							"key": "offset",
+							"value": "0"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "stocks - put",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "symbol",
+							"value": "INFY",
+							"type": "text"
+						},
+						{
+							"key": "close",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "date",
+							"value": "1900-03-31",
+							"type": "text"
+						},
+						{
+							"key": "high",
+							"value": "6",
+							"type": "text"
+						},
+						{
+							"key": "low",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "open",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "volume",
+							"value": "0",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{DEV_URL}}/stocks",
+					"host": [
+						"{{DEV_URL}}"
+					],
+					"path": [
+						"stocks"
+					]
+				},
+				"description": "updates an existing stock"
+			},
+			"response": []
+		},
+		{
+			"name": "predictions - get",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{DEV_URL}}/predictions?symbol=INFY",
+					"host": [
+						"{{DEV_URL}}"
+					],
+					"path": [
+						"predictions"
+					],
+					"query": [
+						{
+							"key": "symbol",
+							"value": "INFY"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "stocks - create",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "symbol",
+							"value": "RCOM",
+							"type": "text"
+						},
+						{
+							"key": "close",
+							"value": "1.9",
+							"type": "text"
+						},
+						{
+							"key": "date",
+							"value": "2019-04-24",
+							"type": "text"
+						},
+						{
+							"key": "high",
+							"value": "1.95",
+							"type": "text"
+						},
+						{
+							"key": "low",
+							"value": "1.9",
+							"type": "text"
+						},
+						{
+							"key": "open",
+							"value": "1.9",
+							"type": "text"
+						},
+						{
+							"key": "volume",
+							"value": "16473990",
+							"type": "text"
+						},
+						{
+							"key": "updatePrediction",
+							"value": "True",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{DEV_URL}}/stocks",
+					"host": [
+						"{{DEV_URL}}"
+					],
+					"path": [
+						"stocks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "analysis",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{DEV_URL}}/analysis?classifier=RF",
+					"host": [
+						"{{DEV_URL}}"
+					],
+					"path": [
+						"analysis"
+					],
+					"query": [
+						{
+							"key": "classifier",
+							"value": "RF"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "653a7f47-db81-47dd-b745-d877d728b0b8",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "c2f51886-98a4-47c8-a69a-3e02e45c62e6",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "3571b0c1-c2bc-4d44-b3ef-bd94d9cadb3a",
+			"key": "DEV_URL",
+			"value": "127.0.0.1:5000",
+			"type": "string"
+		},
+		{
+			"id": "d22d99ed-5b3b-49c9-87af-947c74766e02",
+			"key": "PROD_URL",
+			"value": "https://stock-analysis-application.herokuapp.com",
+			"type": "string"
+		}
+	]
+}
