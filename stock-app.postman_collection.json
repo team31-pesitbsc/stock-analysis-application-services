@@ -292,13 +292,13 @@
 	],
 	"variable": [
 		{
-			"id": "3571b0c1-c2bc-4d44-b3ef-bd94d9cadb3a",
+			"id": "03a27bb9-b121-4336-85e2-c228f6414b69",
 			"key": "DEV_URL",
 			"value": "127.0.0.1:5000",
 			"type": "string"
 		},
 		{
-			"id": "d22d99ed-5b3b-49c9-87af-947c74766e02",
+			"id": "9f92fb28-8588-4568-b7ac-59d8103d2e33",
 			"key": "PROD_URL",
 			"value": "https://stock-analysis-application.herokuapp.com",
 			"type": "string"
