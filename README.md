@@ -39,8 +39,8 @@ are evaluated daily and a list of many companies to choose from. The API is a re
 ## Setting up a local database
 
 - Create a database named **stock** in your local MySQL database
-- Create the schema for the stock database by running the commands present in [DDL.sql](DB/DDL.sql)
-- Load the database with dummy data using the commands present in [DML.sql](DB/DML.sql)
+- Create the schema for the stock database by running the commands present in [DDL.sql](https://github.com/team31-pesitbsc/stock-analysis-application-services/blob/master/db/DDL.sql)
+- Load the database with dummy data using the commands present in [DML.sql](https://github.com/team31-pesitbsc/stock-analysis-application-services/blob/master/db/DML.sql)
 
 ## Running the server locally
 
